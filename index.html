@@ -10,12 +10,22 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="shortcut icon" href="https://www.bitwise.live/res/favicon.png" type="image/png">
     <style>
+        :root {
+            --dark: #111;
+            --light: #eee;
+            --primary: #1e90ff;
+            --highlight: #222;
+            --middle: #181818;
+            --shaded: #bbb;
+            --border-radius: 6px;
+        }
+
         /* global styles */
         body {
-            font-family: monospace, sans-serif;
-            margin: 20px;
-            background-color: #111;
-            color: #cfcfcf;
+            font-family: "Fira Code", "Cascadia Code", "monospace";
+            padding: 25px;
+            background-color: var(--dark);
+            color: var(--light);
             display: flex;
             justify-content: center;
         }
@@ -26,72 +36,52 @@
             text-align: center;
         }
 
-        h1 {
-            color: #ffffff;
-        }
-
         /* script container styles */
         .script {
-            background-color: #222;
+            background-color: var(--highlight);
             padding: 15px;
             margin-bottom: 20px;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
 
         /* command styles */
         .command {
-            background: #111;
-            border: 3px solid #222;
-            color: #1e90ff;
+            background: var(--middle);
+            color: var(--primary);
             padding: 8px;
-            border-radius: 6px;
+            border-radius: var(--border-radius);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: monospace;
             margin-bottom: 10px;
         }
 
-        .command button {
-            background-color: #fff;
+        .copy-button {
+            background-color: var(--light);
             color: #111;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             padding: 4px;
             cursor: pointer;
             display: flex;
-            align-items: center;
-            justify-content: center;
             transition: background-color 0.3s ease;
         }
 
-        .command button:hover {
-            background-color: #ddd;
+        .copy-button:hover {
+            background-color: var(--shaded);
         }
 
-        .command button.copied {
-            background-color: #1e90ff;
-            color: #fff;
-        }
-
-        /* link styles */
-        a {
-            color: #1e90ff;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        a:hover {
-            text-decoration: underline;
-            color: #87cefa;
+        .copy-button.copied {
+            background-color: var(--primary);
+            color: var(--light);
         }
 
         /* script content styles */
         .script-content {
-            color: #cfcfcf;
+            background-color: var(--middle);
             margin-top: 10px;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             max-height: 300px;
             overflow-y: auto;
             overflow-x: hidden;
@@ -100,8 +90,9 @@
         }
 
         .script-content pre {
-            background-color: #111 !important;
-            margin: 0;
+            background-color: var(--dark) !important;
+            border-radius: var(--border-radius);
+            margin: 10px 0 10px 10px;
             padding: 10px;
             white-space: pre-wrap;
             word-break: break-all;
@@ -116,29 +107,9 @@
         .copy-code {
             position: sticky;
             top: 10px;
-            right: 0px;
-            z-index: 10;
-            background-color: #fff;
-            color: #111;
-            border: none;
-            border-radius: 4px;
-            padding: 4px;
-            cursor: pointer;
             display: flex;
-            align-items: center;
-            justify-content: center;
             float: right;
             margin-top: -40px;
-            margin-right: -10px;
-            transition: background-color 0.3s ease;
-        }
-
-        .copy-code:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .copy-code.copied {
-            background-color: #1e90ff;
         }
 
         /* scrollbar styles */
@@ -147,16 +118,16 @@
         }
 
         .script-content::-webkit-scrollbar-track {
-            background: #111;
+            background: var(--middle);
         }
 
         .script-content::-webkit-scrollbar-thumb {
-            background: #888;
+            background: #555;
             border-radius: 5px;
         }
 
         .script-content::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #888;
         }
 
         /* material icons styles */
@@ -176,72 +147,16 @@
         <p>You can run any of these scripts using the PowerShell command:</p>
         <div class="command">
             <span>iwr scripts.bitwise.live/List.ps1 | iex</span>
-            <button onclick="copyCommand(this)"><span class="material-symbols-outlined">content_copy</span></button>
+            <button class="copy-button" data-type="command">
+                <span class="material-symbols-outlined">
+                    content_copy
+                </span>
+            </button>
         </div>
 
         <h2>Available Scripts</h2>
 
-        <!-- MediaTools.ps1 -->
-        <div class="script">
-            <h3>MediaTools.ps1</h3>
-            <p>A collection of PowerShell functions for downloading, converting, compressing, and updating media files
-                using yt-dlp and FFmpeg.</p>
-            <div class="command">
-                <span>iwr https://scripts.bitwise.live/MediaTools.ps1 | iex</span>
-                <button onclick="copyCommand(this)"><span class="material-symbols-outlined">content_copy</span></button>
-            </div>
-            <div class="script-content" id="script-MediaTools">
-                <button class="copy-code" onclick="copyCode(this)"><span
-                        class="material-symbols-outlined">content_copy</span></button>
-                <pre><code class="language-powershell"></code></pre>
-            </div>
-        </div>
-
-        <!-- HostTools.ps1 -->
-        <div class="script">
-            <h3>HostTools.ps1</h3>
-            <p>A PowerShell script with various utility functions to enhance system interaction and scripting
-                efficiency.</p>
-            <div class="command">
-                <span>iwr https://scripts.bitwise.live/HostTools.ps1 | iex</span>
-                <button onclick="copyCommand(this)"><span class="material-symbols-outlined">content_copy</span></button>
-            </div>
-            <div class="script-content" id="script-HostTools">
-                <button class="copy-code" onclick="copyCode(this)"><span
-                        class="material-symbols-outlined">content_copy</span></button>
-                <pre><code class="language-powershell"></code></pre>
-            </div>
-        </div>
-
-        <!-- PSProfile.ps1 -->
-        <div class="script">
-            <h3>PSProfile.ps1</h3>
-            <p>Useful PowerShell Profile with a better prompt.</p>
-            <div class="command">
-                <span>iwr https://scripts.bitwise.live/PSProfile.ps1 | iex</span>
-                <button onclick="copyCommand(this)"><span class="material-symbols-outlined">content_copy</span></button>
-            </div>
-            <div class="script-content" id="script-PSProfile">
-                <button class="copy-code" onclick="copyCode(this)"><span
-                        class="material-symbols-outlined">content_copy</span></button>
-                <pre><code class="language-powershell"></code></pre>
-            </div>
-        </div>
-
-        <!-- VHSify.ps1 -->
-        <div class="script">
-            <h3>VHSify.ps1</h3>
-            <p>Converts a specified video file into a VHS-like video. Requires FFmpeg.</p>
-            <div class="command">
-                <span>iwr https://scripts.bitwise.live/VHSify.ps1 | iex</span>
-                <button onclick="copyCommand(this)"><span class="material-symbols-outlined">content_copy</span></button>
-            </div>
-            <div class="script-content" id="script-VHSify">
-                <button class="copy-code" onclick="copyCode(this)"><span
-                        class="material-symbols-outlined">content_copy</span></button>
-                <pre><code class="language-powershell"></code></pre>
-            </div>
-        </div>
+        <div id="scriptsContainer"></div>
     </div>
 
     <!-- prism.js for syntax highlighting -->
@@ -250,18 +165,99 @@
         src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
 
     <script>
-        // copy command to clipboard
-        function copyCommand(button) {
-            const command = button.previousElementSibling.textContent;
-            copyToClipboard(command, button);
-        }
+        const scripts = [
+            {
+                name: "MediaTools",
+                description: "A collection of PowerShell functions for downloading, converting, compressing, and updating media files using yt-dlp and FFmpeg."
+            },
+            {
+                name: "HostTools",
+                description: "A PowerShell script with various utility functions to enhance system interaction and scripting efficiency."
+            },
+            {
+                name: "PSProfile",
+                description: "Useful PowerShell Profile with a better prompt."
+            },
+            {
+                name: "VHSify",
+                description: "Converts a specified video file into a VHS-like video. Requires FFmpeg."
+            }
+        ];
 
-        // copy code to clipboard
-        function copyCode(button) {
-            const codeElement = button.nextElementSibling.querySelector('code');
-            const code = codeElement.textContent;
-            copyToClipboard(code, button);
-        }
+        const scriptsContainer = document.getElementById('scriptsContainer');
+
+        scripts.forEach(script => {
+            // parent script div
+            const scriptDiv = document.createElement('div');
+            scriptDiv.classList.add('script');
+
+            // script title and description
+            const scriptTitle = document.createElement('h3');
+            scriptTitle.textContent = `${script.name}.ps1`;
+
+            const scriptDescription = document.createElement('p');
+            scriptDescription.textContent = script.description;
+
+            // command
+            const commandDiv = document.createElement('div');
+            commandDiv.classList.add('command');
+
+            const commandSpan = document.createElement('span');
+            commandSpan.textContent = `iwr https://scripts.bitwise.live/${script.name}.ps1 | iex`;
+
+            // command copy button
+            const commandButton = document.createElement('button');
+            commandButton.classList.add('copy-button');
+            commandButton.setAttribute('data-type', 'command');
+            const commandButtonIcon = document.createElement('span');
+            commandButtonIcon.classList.add('material-symbols-outlined');
+            commandButtonIcon.textContent = 'content_copy';
+            commandButton.appendChild(commandButtonIcon);
+
+            commandDiv.appendChild(commandSpan);
+            commandDiv.appendChild(commandButton);
+
+            // script content
+            const scriptContentDiv = document.createElement('div');
+            scriptContentDiv.classList.add('script-content');
+            scriptContentDiv.setAttribute('id', `script-${script.name}`);
+
+            // copy code button
+            const copyCodeButton = document.createElement('button');
+            copyCodeButton.classList.add('copy-button', 'copy-code');
+            copyCodeButton.setAttribute('data-type', 'code');
+            const copyCodeButtonIcon = document.createElement('span');
+            copyCodeButtonIcon.classList.add('material-symbols-outlined');
+            copyCodeButtonIcon.textContent = 'content_copy';
+            copyCodeButton.appendChild(copyCodeButtonIcon);
+
+            const preElement = document.createElement('pre');
+            const codeElement = document.createElement('code');
+            codeElement.classList.add('language-powershell');
+
+            preElement.appendChild(codeElement);
+            scriptContentDiv.appendChild(copyCodeButton);
+            scriptContentDiv.appendChild(preElement);
+
+            scriptDiv.appendChild(scriptTitle);
+            scriptDiv.appendChild(scriptDescription);
+            scriptDiv.appendChild(commandDiv);
+            scriptDiv.appendChild(scriptContentDiv);
+
+            scriptsContainer.appendChild(scriptDiv);
+
+            fetchScriptContent(script.name, `script-${script.name}`);
+        });
+
+        document.body.addEventListener('click', function (event) {
+            if (event.target.matches('.copy-button') || event.target.parentNode.matches('.copy-button')) {
+                const button = event.target.closest('.copy-button');
+                const commandType = button.getAttribute('data-type');
+                const textElement = commandType === 'command' ? button.previousElementSibling : button.nextElementSibling.querySelector('code');
+                const text = textElement.textContent;
+                copyToClipboard(text, button);
+            }
+        });
 
         // generic copy to clipboard function
         function copyToClipboard(text, button) {
@@ -292,12 +288,6 @@
                 document.getElementById(elementId).innerText = 'Error fetching script content.';
             }
         }
-
-        // fetch content for all scripts
-        fetchScriptContent('MediaTools', 'script-MediaTools');
-        fetchScriptContent('HostTools', 'script-HostTools');
-        fetchScriptContent('PSProfile', 'script-PSProfile');
-        fetchScriptContent('VHSify', 'script-VHSify');
     </script>
 </body>
 
