@@ -855,7 +855,7 @@ function Show-FileStructure {
                 '^\.?(exe|bat|cmd|ps1|sh|app)$' { "Red" }
                 
                 # Media
-                '^\.?(mp3|wav|flac|ogg|mp4|avi|mkv|mov|wmv|jpg|jpeg|png|gif|bmp|svg|webp)$' { "Green" }
+                '^\.?(mp3|wav|flac|ogg|mp4|avi|mkv|mov|wmv|jpg|jpeg|png|gif|bmp|svg|webp)$' { "Magenta" }
                 
                 # Documents
                 '^\.?(doc|docx|pdf|txt|md|rtf|csv|xlsx|xls|pptx|ppt)$' { "White" }
