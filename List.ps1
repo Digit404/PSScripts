@@ -22,4 +22,4 @@ Write-Host "Here is a list of scripts available:"
 
 Write-Host ([Script]::scripts | Format-Table | Out-String) -ForegroundColor Blue
 
-Write-Host "You can run any of these scripts using the powershell command ""iwr scripts.bitwise.live/{script name}.ps1 | iex""`n"
+Write-Host "You can run any of these scripts using the powershell command ""iwr scripts.rebitwise.com/{script name}.ps1 | iex""`n"
