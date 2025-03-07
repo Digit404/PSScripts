@@ -66,7 +66,8 @@ function Move-Cursor {
     if ($Absolute) {
         $pos.X = $X ?? $cursorPos.X
         $pos.Y = $Y ?? $cursorPos.Y
-    } else {
+    }
+    else {
         $pos.X = $X + $cursorPos.X
         $pos.Y = $Y + $cursorPos.Y
     }
@@ -84,8 +85,8 @@ function Destruct {
     $propertiesList = Get-Member -InputObject $InputObject -MemberType Properties
 
     $properties = $propertiesList.Foreach({
-        $InputObject.$($_.Name)
-    })
+            $InputObject.$($_.Name)
+        })
 
     return $properties
 }
@@ -168,20 +169,20 @@ Adds the path "C:\Program Files\MyApp" to the process environment variable PATH.
 
 #>
 function Add-Path {
-    [CmdletBinding(DefaultParameterSetName='User')]
+    [CmdletBinding(DefaultParameterSetName = 'User')]
     param (
-        [Parameter(Mandatory, ValueFromPipeline, Position=0)]
+        [Parameter(Mandatory, ValueFromPipeline, Position = 0)]
         [string]$Path,
 
-        [Parameter(ParameterSetName='User')]
+        [Parameter(ParameterSetName = 'User')]
         [Alias("AsUser")]
         [switch]$User,
 
-        [Parameter(ParameterSetName='Machine')]
+        [Parameter(ParameterSetName = 'Machine')]
         [Alias("AsMachine")]
         [switch]$Machine,
 
-        [Parameter(ParameterSetName='Process')]
+        [Parameter(ParameterSetName = 'Process')]
         [Alias("Temp", "Temporary")]
         [switch]$Process
     )
@@ -199,7 +200,7 @@ function Add-Path {
     }
 
     # clean up empty strings
-    $SystemPath = $SystemPath.Where({ $_ -ne ""})
+    $SystemPath = $SystemPath.Where({ $_ -ne "" })
 
     $SystemPath += $Path
 
@@ -240,20 +241,20 @@ Remove-Path -Path "C:\Program Files\MyApp" -Process
 Removes "C:\Program Files\MyApp" from the current process-level PATH environment variable.
 #>
 function Remove-Path {
-    [CmdletBinding(DefaultParameterSetName='User')]
+    [CmdletBinding(DefaultParameterSetName = 'User')]
     param (
-        [Parameter(Mandatory, ValueFromPipeline, Position=0)]
+        [Parameter(Mandatory, ValueFromPipeline, Position = 0)]
         [string]$Path,
 
-        [Parameter(ParameterSetName='User')]
+        [Parameter(ParameterSetName = 'User')]
         [Alias("AsUser")]
         [switch]$User,
 
-        [Parameter(ParameterSetName='Machine')]
+        [Parameter(ParameterSetName = 'Machine')]
         [Alias("AsMachine")]
         [switch]$Machine,
 
-        [Parameter(ParameterSetName='Process')]
+        [Parameter(ParameterSetName = 'Process')]
         [Alias("Temp", "Temporary")]
         [switch]$Process
     )
@@ -268,7 +269,7 @@ function Remove-Path {
     
     $PathInPath = $SystemPath.Where({ $_ -eq $Path })
 
-    $SystemPath = $SystemPath.Where({ $_ -ne $Path -and $_ -ne ""})
+    $SystemPath = $SystemPath.Where({ $_ -ne $Path -and $_ -ne "" })
 
     if (-not $PathInPath) {
         throw "$Path not in PATH!"
@@ -297,11 +298,16 @@ function Remove-Path {
     Date: [Current Date]
 #>
 function ColorTest {
-     $colors = [enum]::GetValues([System.ConsoleColor])
-     Foreach ($bgcolor in $colors) {
-          Foreach ($fgcolor in $colors) { Write-Host "$fgcolor|" -ForegroundColor $fgcolor -BackgroundColor $bgcolor -NoNewLine }
-          Write-Host
-     }
+    $colors = [enum]::GetValues([System.ConsoleColor])
+    foreach ($color in $colors) {
+        $spaceString = " " * ($color.ToString().Length + 1)
+        Write-Host "$spaceString" -ForegroundColor $color -BackgroundColor $color -NoNewLine
+    }
+    Write-Host
+    Foreach ($bgcolor in $colors) {
+        Foreach ($fgcolor in $colors) { Write-Host "$fgcolor|" -ForegroundColor $fgcolor -BackgroundColor $bgcolor -NoNewLine }
+        Write-Host
+    }
 }
 
 <#
@@ -406,7 +412,7 @@ The function returns a custom PowerShell object.
 function Object {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory, ValueFromPipeline, Position=0)]
+        [Parameter(Mandatory, ValueFromPipeline, Position = 0)]
         [string] $InputObject
     )
 
@@ -415,25 +421,25 @@ function Object {
 }
 
 $BoxChars = @{
-    Corner = @{
-        TopLeft = '┌'
-        TopRight = '┐'
-        BottomLeft = '└'
+    Corner     = @{
+        TopLeft     = '┌'
+        TopRight    = '┐'
+        BottomLeft  = '└'
         BottomRight = '┘'
-        Rounded = @{
-            TopLeft = '╭'
-            TopRight = '╮'
-            BottomLeft = '╰'
+        Rounded     = @{
+            TopLeft     = '╭'
+            TopRight    = '╮'
+            BottomLeft  = '╰'
             BottomRight = '╯'
         }
     
     }
     Horizontal = '─'
-    Vertical = '│'
-    Cap = @{
-        Left = '╴'
-        Right = '╶'
-        Top = '╵'
+    Vertical   = '│'
+    Cap        = @{
+        Left   = '╴'
+        Right  = '╶'
+        Top    = '╵'
         Bottom = '╷'
     }
 }
@@ -585,7 +591,8 @@ function DrawBox {
 
     $Corner = if ($Rounded) {
         $BoxChars.Corner.Rounded
-    } else {
+    }
+    else {
         $BoxChars.Corner
     }
 
@@ -605,12 +612,14 @@ function DrawBox {
         Write-Host $BoxChars.Vertical -ForegroundColor $BorderColor -NoNewline
         if ($i -lt [Math]::Floor($PaddingY) -or $i -ge [Math]::Floor($Height - $PaddingY)) {
             Write-Host (" " * $Width) -NoNewline
-        } else {
+        }
+        else {
             for ($j = 0; $j -lt $Width; $j++) {
                 # Use null coaslescing if available, but stupid PowerShell 5.1 doesn't recognize
                 $char = if ($SplitText[[Math]::floor($i - $PaddingY)][$j]) {
                     $SplitText[[Math]::floor($i - $PaddingY)][$j]
-                } else {
+                }
+                else {
                     " "
                 }
 
@@ -669,26 +678,25 @@ Opens the target locations of all shortcut files in the current directory.
 The function releases the COM object used to create the shortcut object to avoid potential memory leaks.
 #>
 function Open-Shortcut {
-	param
-	(
-	    [Parameter(Mandatory, Position=0)]
-	    [string]$ShortcutPath
-	)
+    param (
+        [Parameter(Mandatory, Position = 0)]
+        [string]$ShortcutPath
+    )
 	
     if (-not (Test-Path $ShortcutPath)) {
-    	Write-Warning "$ShortcutPath does not exist."
-    	return
+        Write-Warning "$ShortcutPath does not exist."
+        return
     }
 
     $ShortcutPath = Resolve-Path $ShortcutPath
     
-	$shell = New-Object -ComObject WScript.Shell
-	$shortcut = $shell.CreateShortcut($ShortcutPath)
-	$targetPath = $shortcut.TargetPath
+    $shell = New-Object -ComObject WScript.Shell
+    $shortcut = $shell.CreateShortcut($ShortcutPath)
+    $targetPath = $shortcut.TargetPath
 	
-	Set-Location $targetPath
+    Set-Location $targetPath
 
-	[System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
+    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
 }
 
 <#
@@ -766,7 +774,7 @@ Make sure the necessary permissions are in place to access files if providing a 
 #>
 function Get-Bytes {
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [AllowNull()]
         [AllowEmptyString()]
         [Object]$InputData
@@ -878,7 +886,8 @@ function Show-FileStructure {
     # Display the current item
     if (!$IsSubDir) {
         Write-Host "$($item.Name)" -ForegroundColor $RootColor
-    } else {
+    }
+    else {
         $symbol = if ($IsLast) { "└─" } else { "├─" }
         Write-Host "$Prefix$symbol " -NoNewline -ForegroundColor $LineColor
         Write-Host "$($item.Name)" -ForegroundColor (Get-ItemColor $item)
