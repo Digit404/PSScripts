@@ -907,3 +907,52 @@ function Show-FileStructure {
         }
     }
 }
+
+<#
+.SYNOPSIS
+Converts ConsoleColor values to ANSI escape codes for use in terminal output.
+
+.DESCRIPTION
+The Get-ColorEscapeCode function converts ConsoleColor values to ANSI escape codes for use in terminal output. It maps ConsoleColor values to their corresponding ANSI escape codes for foreground and background colors.
+
+.PARAMETER Color
+Specifies the ConsoleColor value to convert to an ANSI escape code.
+
+.PARAMETER Background
+Indicates whether the ANSI escape code should be for the background color. Default is false.
+
+.EXAMPLE
+Get-ColorEscapeCode -Color DarkGreen
+
+This command returns the ANSI escape code for the DarkGreen ConsoleColor value.
+#>
+function Get-ColorEscapeCode {
+    param (
+        [Parameter(Mandatory)]
+        [System.ConsoleColor]$Color,
+        [Parameter(Alias = 'Bg')]
+        [Switch]$Background
+    )
+
+    $baseCode = if ($Background) { 40 } else { 30 }
+
+    switch ($Color) {
+        'Black'       { return "`e[$($baseCode)m" }
+        'DarkBlue'    { return "`e[$($baseCode + 4)m" }
+        'DarkGreen'   { return "`e[$($baseCode + 2)m" }
+        'DarkCyan'    { return "`e[$($baseCode + 6)m" }
+        'DarkRed'     { return "`e[$($baseCode + 1)m" }
+        'DarkMagenta' { return "`e[$($baseCode + 5)m" }
+        'DarkYellow'  { return "`e[$($baseCode + 3)m" }
+        'Gray'        { return "`e[$($baseCode + 7)m" }
+        'DarkGray'    { return "`e[$($baseCode + 60)m" }
+        'Blue'        { return "`e[$($baseCode + 64)m" }
+        'Green'       { return "`e[$($baseCode + 62)m" }
+        'Cyan'        { return "`e[$($baseCode + 66)m" }
+        'Red'         { return "`e[$($baseCode + 61)m" }
+        'Magenta'     { return "`e[$($baseCode + 65)m" }
+        'Yellow'      { return "`e[$($baseCode + 63)m" }
+        'White'       { return "`e[$($baseCode + 67)m" }
+        default       { return "`e[0m" } # Reset
+    }
+}

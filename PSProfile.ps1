@@ -5,28 +5,6 @@ if (!(Get-Module -ListAvailable -Name Terminal-Icons)) {
 }
 Import-Module Terminal-Icons
 
-# Escape characters and color codes
-$ESC = [char]27
-
-$Colors = @{
-	DARKBLACK   = "$ESC[30m"
-	DARKRED     = "$ESC[31m"
-	DARKGREEN   = "$ESC[32m"
-	DARKYELLOW  = "$ESC[33m"
-	DARKBLUE    = "$ESC[34m"
-	DARKMAGENTA = "$ESC[35m"
-	DARKCYAN    = "$ESC[36m"
-	DARKWHITE   = "$ESC[37m"
-	BLACK       = "$ESC[90m"
-	RED         = "$ESC[91m"
-	GREEN       = "$ESC[92m"
-	YELLOW      = "$ESC[93m"
-	BLUE        = "$ESC[94m"
-	MAGENTA     = "$ESC[95m"
-	CYAN        = "$ESC[96m"
-	WHITE       = "$ESC[97m"
-}
-
 # Put your preferred name here
 $CustomName = ""
 
@@ -44,10 +22,13 @@ function prompt {
 	# Uncomment the following line to print time on prompt, requires HostTools.ps1 to be sourced in the profile
 	# Write-Time
 
-	Set-PSReadLineOption -PromptText "> "
+	Set-PSReadLineOption -PromptText "> " -ContinuationPrompt "    "
 
-	"$Name $($Colors.Yellow)$currentDir $($Colors.Reset)$('>' * ($nestedPromptLevel + 1)) "
-	return ""
+	Write-Host $Name -NoNewline
+	Write-Host " " -NoNewline
+	Write-Host $currentDir -NoNewline -ForegroundColor DarkYellow
+	Write-Host " " -NoNewline
+	return "> "
 }
 
 function Write-Time {
@@ -60,3 +41,17 @@ function Write-Time {
 }
 
 New-Alias new "New-Object"
+
+# Default Keybindings that aren't set in some versions of PSReadLine
+Set-PSReadLineKeyHandler -Chord 'Ctrl+Backspace' -Function BackwardKillWord
+Set-PSReadLineKeyHandler -Chord 'Escape' -ScriptBlock { ClearLine }
+Set-PSReadLineKeyHandler -Chord 'Ctrl+LeftArrow' -Function BackwardWord
+Set-PSReadLineKeyHandler -Chord 'Ctrl+RightArrow' -Function ForwardWord
+Set-PSReadLineKeyHandler -Chord 'Ctrl+Delete' -Function KillWord
+Set-PSReadLineKeyHandler -Chord 'Ctrl+Shift+RightArrow' -Function SelectForwardWord
+Set-PSReadLineKeyHandler -Chord 'Ctrl+Shift+LeftArrow' -Function SelectBackwardWord
+
+Remove-PSReadLineKeyHandler -Chord 'Ctrl+a'
+Remove-PSReadLineKeyHandler -Chord 'Ctrl+A'
+Set-PSReadLineKeyHandler -Chord 'Ctrl+A' -Function SelectAll
+Set-PSReadLineKeyHandler -Chord 'Ctrl+a' -Function SelectAll
