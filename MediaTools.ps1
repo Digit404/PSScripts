@@ -261,6 +261,46 @@ function DownloadVideo {
 
 <#
 .SYNOPSIS
+Downloads audio from a given query or URL using yt-dlp.
+
+.DESCRIPTION
+The `Get-Audio` function leverages yt-dlp to download audio from YouTube or other supported platforms by either a search query or a direct URL. The audio is extracted in the specified format.
+
+.PARAMETER Query
+The search query or direct URL to the audio source. If the input is not a URL or contains spaces, it's treated as a search query and prefixed with "ytsearch:". This parameter is mandatory.
+
+.PARAMETER Format
+The desired audio format for the downloaded audio file. Defaults to "mp3". It uses the `Format` alias for this parameter.
+
+.EXAMPLE
+Get-Audio "https://example.com/audio" -Format "wav"
+
+.EXAMPLE
+Get-Audio classical music
+#>
+function Get-Audio {
+    param (
+        [Parameter(Mandatory, ParameterSetName="Query", Position=0, ValueFromRemainingArguments)]
+        [string] $Query,
+        [Parameter()]
+        [string] $Format = "mp3"
+    )
+
+    if ($Query -notmatch "(?:https:\/\/).*" || $query -contains " ") {
+        $Query = "ytsearch:$Query"
+    }
+
+    $command = "yt-dlp -x --audio-format $Format $Query -o '%(title)s.%(ext)s'"
+
+    if ($Query -match "https:\/\/.*?suno.com\/.*") {
+        $command += " --ies 'default,-html5'" # This is to fix suno links until yt-dlp fixes their extractor
+    }
+
+    Invoke-Expression $command
+}
+
+<#
+.SYNOPSIS
 Updates the metadata of an audio file.
 
 .DESCRIPTION
@@ -436,7 +476,6 @@ Temporary log files are created during the compression process and are automatic
 .LINK
 https://ffmpeg.org/
 #>
-
 function Compress-Video {
     [CmdletBinding(DefaultParameterSetName='Quality')]
     param(

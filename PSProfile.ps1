@@ -40,6 +40,8 @@ function Write-Time {
 	Write-Host "`r" -NoNewline
 }
 
+function Explore { Invoke-Item . }
+
 New-Alias new "New-Object"
 
 # Default Keybindings that aren't set in some versions of PSReadLine
