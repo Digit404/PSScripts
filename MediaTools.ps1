@@ -505,7 +505,15 @@ function Compress-Video {
 
         [Parameter()]
         [Alias('AudioBR', 'AudioBitRate', 'ABR')]
-        [int]$AudioBitRateKbps = 128
+        [int]$AudioBitRateKbps = 128,
+
+        [Parameter()]
+        [Alias('Resolution')]
+        [string]$OutputResolution,
+
+        [Parameter()]
+        [Alias('ResPercent')]
+        [nullable[int]]$ResolutionPercent
     )
 
     begin {
@@ -516,14 +524,28 @@ function Compress-Video {
 
     Process {
         # Calculate duration in seconds
-        $durationSec = [math]::Ceiling([double](ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$InputFile"))
+        $durationSec = [math]::Ceiling([double](ffprobe -v error -show_entries format=duration -of csv=p=0 "$InputFile"))
 
         # Extract video resolution (width and height)
-        $videoInfo = ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate -of csv=p=0:s=x "$InputFile"
+        $videoInfo = ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate -of csv=p=0:s="x" "$InputFile"
         $resolution = $videoInfo.Split('x')
         $width = [int]$resolution[0]
         $height = [int]$resolution[1]
         $frameRate = [double]($resolution[2] -replace '/.*', '')
+
+        # Apply resolution percentage if specified
+        if ($ResolutionPercent) {
+            $width = [math]::Round($width * $ResolutionPercent / 100)
+            $height = [math]::Round($height * $ResolutionPercent / 100)
+        }
+
+        if ($OutputResolution) {
+            $outputResolutionParts = $OutputResolution.Split('x')
+
+            $width = [int]$outputResolutionParts[0]
+            $height = [int]$outputResolutionParts[1]
+        }
+
         $megaPixels = ($width * $height) / 1000000
 
         # Calculations for video bit rate
@@ -551,6 +573,11 @@ function Compress-Video {
         # Add FPS cap if specified
         if ($null -ne $TargetFPS) {
             $ffmpegCmdPass2 += " -r $TargetFPS"
+        }
+
+        # Add resolution cap if specified
+        if ($null -ne $OutputResolution -or $null -ne $ResolutionPercent) {
+            $ffmpegCmdPass2 += " -vf scale=${width}:${height}"
         }
 
         $ffmpegCmdPass2 += " `"$outFile`""
