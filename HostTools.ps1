@@ -956,3 +956,116 @@ function Get-ColorEscapeCode {
         default       { return "`e[0m" } # Reset
     }
 }
+
+<#
+.SYNOPSIS
+Displays a byte array or string in a formatted table with hexadecimal and ASCII representation.
+
+.DESCRIPTION
+The `Write-Bytes` function takes an input object, either a string or a byte array, and displays its contents
+in a formatted table. Each line of the table shows the byte offset, hexadecimal representation, and ASCII
+representation of the input data. Non-printable characters in the ASCII column are represented as dots.
+
+.PARAMETER InputObject
+The input data which can be a string or a byte array. If a string is provided, it is converted to a UTF-8 byte array.
+
+.PARAMETER SectionSpacing
+Specifies the number of spaces between the columns in the output table. Default is 4.
+
+.PARAMETER LineLength
+Determines the number of bytes displayed per row in the table. Default is 8.
+
+.PARAMETER TableColor
+Sets the foreground color for the table headings. Default is 'White'.
+#>
+function Write-Bytes {
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias("Object")]
+        $InputObject,
+        [int]$SectionSpacing = 4,
+        [int]$LineLength = 16,
+        [int]$LetterSpacing = 1,
+        [System.ConsoleColor]$TableColor = 'White'
+    )
+
+    # function to determine if a character is printable
+    function IsPrintable {
+        param (
+            [byte]$char
+        )
+        return ($char -gt 31 -and $char -lt 127)
+    }
+
+    if ($InputObject -is [string]) {
+        # convert string to byte array
+        $ByteArray = [System.Text.Encoding]::UTF8.GetBytes($InputObject)
+    }
+    elseif ($InputObject -is [byte[]]) {
+        $ByteArray = $InputObject
+    }
+    else {
+        Write-Host "Write-Bytes: Invalid input type. Please provide a string or byte array." -ForegroundColor Red
+        return
+    }
+
+    # print the ruler
+    Write-Host (" " * (4 + $SectionSpacing)) -NoNewline -ForegroundColor Black -BackgroundColor $TableColor
+
+    foreach ($i in 0..($lineLength - 1)) {
+        Write-Host -NoNewline (("{0:X2}" -f $i) + " ") -ForegroundColor Black -BackgroundColor $TableColor
+    }
+
+    Write-Host -NoNewline (" " * ($SectionSpacing - 1)) -ForegroundColor Black -BackgroundColor $TableColor
+    Write-Host "ASCII" -ForegroundColor Black -BackgroundColor $TableColor -NoNewline
+    Write-Host ("-" * ($lineLength * $LetterSpacing - 5)) -ForegroundColor Black -BackgroundColor $TableColor -NoNewline
+    Write-Host
+
+    [int]$offset = 0
+
+    for ($i = 0; $i -lt $ByteArray.Length; $i += $lineLength) {
+        # print the offset
+        $formattedOffset = "{0:X4}" -f $offset
+        Write-Host -NoNewline "$formattedOffset" -ForegroundColor Black -BackgroundColor $TableColor
+        Write-Host -NoNewline (" " * $SectionSpacing)
+
+        # print the hexadecimal values
+        for ($j = 0; $j -lt $lineLength; $j++) {
+            if (($i + $j) -lt $ByteArray.Length) {
+                $byte = $ByteArray[$i + $j]
+                $formattedByte = "{0:X2}" -f $byte
+                Write-Host -NoNewline "$formattedByte "
+            }
+            else {
+                Write-Host -NoNewline "   "
+            }
+        }
+
+        # align ASCII output column
+        Write-Host -NoNewline (" " * ($SectionSpacing - 1))
+
+        $spaces = " " * ($LetterSpacing - 1)
+
+        # print the ASCII representation
+        for ($j = 0; $j -lt $lineLength; $j++) {
+            if (($i + $j) -lt $ByteArray.Length) {
+                $byte = $ByteArray[$i + $j]
+                if (IsPrintable $byte) {
+                    [char]$char = [char]$byte
+                    Write-Host -NoNewline "$char"
+                }
+                else {
+                    Write-Host -NoNewline "." -ForegroundColor DarkGray
+                }
+                Write-Host -NoNewline $spaces
+            }
+            else {
+                Write-Host -NoNewline (" " + $spaces)
+            }
+        }
+
+        Write-Host ""
+
+        $offset += $lineLength
+    }
+}
