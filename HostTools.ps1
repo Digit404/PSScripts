@@ -1025,45 +1025,60 @@ function Write-Bytes {
     elseif ($InputObject -is [byte[]]) {
         $ByteArray = $InputObject
     }
+    elseif ($InputObject -is [System.Object[]]) {
+        # convert array of objects to byte array
+        $ByteArray = @()
+        foreach ($item in $InputObject) {
+            if ($item -is [byte]) {
+                $ByteArray += $item
+            }
+            else {
+                Write-Host "Write-Bytes: Invalid item type. Please provide a byte array." -ForegroundColor Red
+                return
+            }
+        }
+    }
     else {
-        Write-Host "Write-Bytes: Invalid input type. Please provide a string or byte array." -ForegroundColor Red
+        $type = $InputObject.GetType().Name
+        Write-Host "Write-Bytes: Invalid input type: $type Please provide a string or byte array." -ForegroundColor Red
         return
     }
 
     # print the ruler
-    Write-Host (" " * (4 + $SectionSpacing)) -NoNewline -ForegroundColor Black -BackgroundColor $TableColor
+    $ruler = " " * (4 + $SectionSpacing)
 
     foreach ($i in 0..($lineLength - 1)) {
-        Write-Host -NoNewline (("{0:X2}" -f $i) + " ") -ForegroundColor Black -BackgroundColor $TableColor
+        $ruler += ("{0:X2}" -f $i) + " "
     }
 
-    Write-Host -NoNewline (" " * ($SectionSpacing - 1)) -ForegroundColor Black -BackgroundColor $TableColor
-    Write-Host "ASCII" -ForegroundColor Black -BackgroundColor $TableColor -NoNewline
-    Write-Host ("-" * ($lineLength * $LetterSpacing - 5)) -ForegroundColor Black -BackgroundColor $TableColor -NoNewline
-    Write-Host
+    $ruler += (" " * ($SectionSpacing - 1))
+    $ruler += "ASCII" + ("-" * ($lineLength * $LetterSpacing - 5))
+    Write-Host $ruler -ForegroundColor Black -BackgroundColor $TableColor -NoNewline
+    Write-Host ""
 
-    [int]$offset = 0
+    $offset = 0
 
     for ($i = 0; $i -lt $ByteArray.Length; $i += $lineLength) {
         # print the offset
         $formattedOffset = "{0:X4}" -f $offset
         Write-Host -NoNewline "$formattedOffset" -ForegroundColor Black -BackgroundColor $TableColor
-        Write-Host -NoNewline (" " * $SectionSpacing)
+        $line = " " * $SectionSpacing
 
         # print the hexadecimal values
         for ($j = 0; $j -lt $lineLength; $j++) {
             if (($i + $j) -lt $ByteArray.Length) {
                 $byte = $ByteArray[$i + $j]
                 $formattedByte = "{0:X2}" -f $byte
-                Write-Host -NoNewline "$formattedByte "
+                $line += "$formattedByte "
             }
             else {
-                Write-Host -NoNewline "   "
+                $line += "   "
             }
         }
 
         # align ASCII output column
-        Write-Host -NoNewline (" " * ($SectionSpacing - 1))
+        $line += (" " * ($SectionSpacing - 1))
+        Write-Host $line -NoNewline
 
         $spaces = " " * ($LetterSpacing - 1)
 
@@ -1074,6 +1089,9 @@ function Write-Bytes {
                 if (IsPrintable $byte) {
                     [char]$char = [char]$byte
                     Write-Host -NoNewline "$char"
+                }
+                elseif ($byte -eq 10) {
+                    Write-Host "↲" -NoNewline -ForegroundColor DarkGray
                 }
                 else {
                     Write-Host -NoNewline "." -ForegroundColor DarkGray
@@ -1088,5 +1106,59 @@ function Write-Bytes {
         Write-Host ""
 
         $offset += $lineLength
+    }
+}
+
+function Start-HttpListener {
+    param (
+        [int]$Port = 8080,
+        [string]$Hostname = "localhost",
+        [ScriptBlock]$DataCallback = $null
+    )
+
+    $Url = "http://${Hostname}:${Port}/"
+
+    # Create the HttpListener
+    $listener = New-Object System.Net.HttpListener
+    $listener.Prefixes.Add($Url)
+    $listener.Start()
+
+    Write-Output "Listening for HTTP requests on $Url"
+
+    try {
+        while ($listener.IsListening) {
+            # wait for an incoming request
+            $context = $listener.GetContext()
+            $request = $context.Request
+            $response = $context.Response
+
+            # read the request body
+            $reader = New-Object System.IO.StreamReader($request.InputStream)
+            $content = $reader.ReadToEnd()
+            $reader.Close()
+
+            # write the request content
+            Write-Output "Received request with content:"
+            Write-Output $content
+
+            # if a callback is provided, call it with the content
+            if ($DataCallback) {
+                & $DataCallback $content
+            }
+
+            # set the status code to 200 OK
+            $response.StatusCode = 200
+
+            # prepare and send a generic response
+            $responseString = "Request received"
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes($responseString)
+            $response.ContentLength64 = $buffer.Length
+            $response.OutputStream.Write($buffer, 0, $buffer.Length)
+            $response.OutputStream.Close()
+        }
+    }
+    finally {
+        # stop the listener when done
+        $listener.Stop()
     }
 }
