@@ -827,6 +827,9 @@ Specifies the path of the directory to display. Defaults to the current working 
 .PARAMETER Prefix
 Used internally to format the tree structure. Default is an empty string.
 
+.PARAMETER Exclude
+Specifies an array of paths to exclude from the output. Default is an empty array.
+
 .PARAMETER IsLast
 Used internally to identify if the current item is the last in its parent directory. Switch parameter.
 
@@ -842,6 +845,7 @@ function Show-FileStructure {
     param (
         [string]$Path = $PWD,
         [string]$Prefix = "",
+        [string[]]$Exclude = @(),
         [switch]$IsLast,
         [switch]$IsSubDir
     )
@@ -895,15 +899,32 @@ function Show-FileStructure {
 
     # If it's a directory, process its contents
     if ($item.PSIsContainer) {
+
+        $excludedFolders = @()
+
+        if ($Exclude) {
+            foreach ($ex in @($Exclude)) {
+                $resolvedPath = Resolve-Path $ex
+                $normalizedPath = [System.IO.Path]::GetFullPath($resolvedPath).TrimEnd('\').ToLower()
+                $excludedFolders += $normalizedPath
+            }
+        }
+
         $children = Get-ChildItem $item.FullName | Sort-Object { $_.PSIsContainer } -Descending
         $childCount = $children.Count
 
         for ($i = 0; $i -lt $childCount; $i++) {
             $child = $children[$i]
+            $childName = [System.IO.Path]::GetFullPath($child.FullName).TrimEnd('\').ToLower()
+
+            if ($excludedFolders -contains $childName) {
+                continue
+            }
+
             $newPrefix = if (!$IsSubDir) { "" } elseif ($IsLast) { "$Prefix   " } else { "$Prefix│  " }
             $isLastChild = ($i -eq $childCount - 1)
 
-            Show-FileStructure -Path $child.FullName -Prefix $newPrefix -IsLast:$isLastChild -IsSubDir
+            Show-FileStructure -Path $child.FullName -Prefix $newPrefix -IsLast:$isLastChild -IsSubDir -Exclude $excludedFolders
         }
     }
 }
