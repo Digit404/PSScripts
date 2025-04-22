@@ -978,6 +978,31 @@ function Get-ColorEscapeCode {
     }
 }
 
+<#
+.SYNOPSIS
+Starts a simple HTTP listener on a specified hostname and port.
+
+.DESCRIPTION
+Start-HttpListener sets up an HTTP server endpoint that listens for incoming requests at a given hostname and port. For each incoming request, it reads the request body, outputs the content, and optionally passes the content to a user-supplied callback script block for custom processing. Every request receives a generic "Request received" response with status code 200.
+
+.PARAMETER Port
+The port to listen on for incoming HTTP requests. Defaults to 8080.
+
+.PARAMETER Hostname
+The hostname to bind the listener to. Defaults to "localhost".
+
+.PARAMETER DataCallback
+A script block to invoke with the request body content as the sole argument for each received request. Optional.
+
+.EXAMPLE
+Start-HttpListener -Port 8081 -DataCallback { param($data) Write-Host "Received: $data" }
+
+Starts listening on http://localhost:8081/. Outputs the received request body content via Write-Host.
+
+.NOTES
+- Only one request will be processed at a time (single-threaded).
+- Listener runs indefinitely until the host process is terminated or the function is interrupted.
+#>
 function Start-HttpListener {
     param (
         [int]$Port = 8080,
@@ -1030,4 +1055,64 @@ function Start-HttpListener {
         # stop the listener when done
         $listener.Stop()
     }
+}
+
+<#
+.SYNOPSIS
+Launches a Windows application by its name or shortcut.
+
+.DESCRIPTION
+Start-AppByName tries to intelligently launch an application on Windows by searching with the provided name. It checks for Universal/Win32 apps registered in the Start menu, executables in your system PATH, or Start Menu shortcuts (.lnk files). If it finds a match, it launches the app; otherwise, you'll get a not found message.
+
+.PARAMETER AppName
+The display name, executable name, or Start Menu shortcut name of the application you wanna start. Mandatory.
+
+.EXAMPLE
+Start-AppByName "Calculator"
+
+Attempts to open the Calculator app, regardless of whether it's a UWP, classic, or pinned as a shortcut.
+
+.NOTES
+- Search is case-insensitive and attempts multiple resolution strategies.
+- Works for UWP apps, classic desktop apps, and Start Menu shortcuts.
+#>
+function Start-AppByName {
+    param(
+        [Parameter(Mandatory, ValueFromRemainingArguments)]
+        [string]$AppName
+    )
+
+    # try with Get-StartApps for UWP and traditional apps
+    $app = Get-StartApps | Where-Object { $_.Name -like $AppName } | Select-Object -First 1
+
+    if ($null -ne $app) {
+        Write-Host "Launching $($app.Name)..."
+        Start-Process "explorer.exe" "shell:appsFolder\$($app.AppID)"
+        return
+    }
+
+    # try to find an exe in PATH as fallback
+    $exe = (Get-Command $AppName -ErrorAction SilentlyContinue)
+    if ($null -ne $exe) {
+        Write-Host "Launching $AppName from PATH..."
+        Start-Process $AppName
+        return
+    }
+
+    # try to find a shortcut in Start Menu
+    $startMenuPaths = @(
+        "$env:ProgramData\Microsoft\Windows\Start Menu\Programs",
+        "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
+    )
+
+    foreach ($path in $startMenuPaths) {
+        $lnk = Get-ChildItem -Path $path -Filter "$AppName.lnk" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($lnk) {
+            Write-Host "Launching $AppName via shortcut..."
+            Start-Process $lnk.FullName
+            return
+        }
+    }
+
+    Write-Host "App '$AppName' not found."
 }
