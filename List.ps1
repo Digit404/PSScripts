@@ -17,6 +17,8 @@ class Script {
 [Script]::new("HostTools.ps1", "A PowerShell script with various utility functions to enhance system interaction and scripting efficiency.")  | Out-Null
 [Script]::new("PSProfile.ps1", "Useful PowerShell profile with a better prompt.")  | Out-Null
 [Script]::new("VHSify.ps1", "Converts a specified video file into a VHS-like video. Requires FFmpeg.")  | Out-Null
+[Script]::new("Lisp.ps1", "A simple set of functions to turn PowerShell into a Lisp-like language.")  | Out-Null
+[Script]::new("BitTools.ps1", "A collection of PowerShell functions for manipulating and displaying binary data.")  | Out-Null
 
 Write-Host "Here is a list of scripts available:"
 

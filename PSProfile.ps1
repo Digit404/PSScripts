@@ -19,7 +19,7 @@ function prompt {
 		$currentDir = "~" + $currentDir.Substring($homeDir.Length)
 	}
 
-	# Uncomment the following line to print time on prompt, requires HostTools.ps1 to be sourced in the profile
+	# Uncomment the following line to print time on prompt
 	# Write-Time
 
 	Set-PSReadLineOption -PromptText "> " -ContinuationPrompt "    "
