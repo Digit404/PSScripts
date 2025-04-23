@@ -40,9 +40,17 @@ function Write-Time {
 	Write-Host "`r" -NoNewline
 }
 
-function Explore { Invoke-Item . }
+function Explore {
+	param (
+		[string]$Path = $PWD.Path
+	)
+	Invoke-Item $Path
+}
 
-New-Alias new "New-Object"
+Set-Alias new "New-Object"
+Set-Alias rename Rename-Item
+Set-Alias rn Rename-Item
+Set-Alias touch New-Item
 
 # Default Keybindings that aren't set in some versions of PSReadLine
 Set-PSReadLineKeyHandler -Chord 'Ctrl+Backspace' -Function BackwardKillWord

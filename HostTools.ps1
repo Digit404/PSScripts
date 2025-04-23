@@ -1057,62 +1057,146 @@ function Start-HttpListener {
     }
 }
 
+function Get-LevenshteinDistance {
+    param (
+        [Parameter(Mandatory)]
+        [string]$A,
+        [Parameter(Mandatory)]
+        [string]$B
+    )
+
+    $matrix = [Int[, ]]::new($A.Length + 1, $B.Length + 1)
+
+    foreach ($i in 0..$A.Length) {
+        $matrix[$i, 0] = $i
+    }
+
+    foreach ($j in 0..$B.Length) {
+        $matrix[0, $j] = $j
+    }
+
+    foreach ($i in 1..$A.Length) {
+        foreach ($j in 1..$B.Length) {
+            $cost = [int]!($A[$i - 1] -eq $B[$j - 1])
+
+            $deletion = $matrix[($i - 1), $j] + 1
+            $insertion = $matrix[$i, ($j - 1)] + 1
+            $substitution = $matrix[($i - 1), ($j - 1)] + $cost
+
+            $matrix[$i, $j] = [math]::Min([Math]::Min($deletion, $insertion), $substitution)
+        }
+    }
+
+    return $matrix[$A.Length, $B.Length]
+}
+
+function Get-StringTokens {
+    param(
+        [string]$InputString
+    )
+    # lowercase, replace punctuation/non-word with spaces, squeeze spaces
+    $normalized = $InputString.ToLower() -replace '[^\w\s]', ' '
+    $normalized = $normalized -replace '\s+', ' '
+    $tokens = $normalized.Trim().Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
+    return $tokens
+}
+
+function Get-TokenSimilarity {
+    param(
+        [Parameter(Mandatory)]
+        [string]$A,
+        [Parameter(Mandatory)]
+        [string]$B
+    )
+    $inputTokens = Get-StringTokens $A
+    $targetTokens = Get-StringTokens $B
+
+    if ($inputTokens.Count -eq 0 -or $targetTokens.Count -eq 0) { return 0 }
+    
+    $intersection = $inputTokens | Where-Object { $targetTokens -contains $_ }
+    return ($intersection.Count / $inputTokens.Count) 
+}
+
+function Get-StringSimilarity {
+    param(
+        [Parameter(Mandatory)]
+        [string]$A,
+        [Parameter(Mandatory)]
+        [string]$B
+    )
+    
+    $tokenScore = Get-TokenSimilarity $A $B
+    $partialSubScore = 0
+    if ($B -like "*$A*") {
+        $partialSubScore = ($A.Length / $B.Length)
+    }
+
+    $lev = Get-LevenshteinDistance $A $B
+    $maxLen = [Math]::Max($A.Length, $B.Length)
+    $levScore = if ($maxLen -eq 0) { 1 } else { 1 - ($lev / $maxLen) }
+
+    if ($tokenScore -gt 0 -or $partialSubScore -gt 0) {
+        return [Math]::Max($tokenScore, $partialSubScore)*0.6 + $levScore*0.4
+    } else {
+        return $levScore*0.2
+    }
+}
+
+function FuzzyMatch {
+    param (
+        [Parameter(Mandatory)]
+        [string]$InputString,
+        [Parameter(Mandatory)]
+        [string[]]$StringsToMatch,
+        [int]$First = 1
+    )
+
+    $scores = foreach ($string in $StringsToMatch) {
+        $similarity = Get-StringSimilarity -A $InputString -B $string
+        [pscustomobject]@{
+            Option     = $string
+            Similarity = $similarity
+        }
+    }
+
+    $sortedScores = $scores | Sort-Object -Property Similarity -Descending
+    $topMatches = $sortedScores | Select-Object -First $First
+
+    return $topMatches | ForEach-Object { $_.Option }
+}
+
 <#
 .SYNOPSIS
 Launches a Windows application by its name or shortcut.
 
 .DESCRIPTION
-Start-AppByName tries to intelligently launch an application on Windows by searching with the provided name. It checks for Universal/Win32 apps registered in the Start menu, executables in your system PATH, or Start Menu shortcuts (.lnk files). If it finds a match, it launches the app; otherwise, you'll get a not found message.
+Start-AppByName tries to intelligently launch an application on Windows by searching with the provided name.
 
 .PARAMETER AppName
-The display name, executable name, or Start Menu shortcut name of the application you wanna start. Mandatory.
+The search term for the application name.
 
 .EXAMPLE
 Start-AppByName "Calculator"
 
-Attempts to open the Calculator app, regardless of whether it's a UWP, classic, or pinned as a shortcut.
+Attempts to open the Calculator app.
 
 .NOTES
-- Search is case-insensitive and attempts multiple resolution strategies.
-- Works for UWP apps, classic desktop apps, and Start Menu shortcuts.
+- Search is case-insensitive, and will match partial names.
 #>
 function Start-AppByName {
-    param(
+    param (
         [Parameter(Mandatory, ValueFromRemainingArguments)]
         [string]$AppName
     )
 
     # try with Get-StartApps for UWP and traditional apps
-    $app = Get-StartApps | Where-Object { $_.Name -like $AppName } | Select-Object -First 1
+    $availableApps = Get-StartApps
 
-    if ($null -ne $app) {
-        Write-Host "Launching $($app.Name)..."
-        Start-Process "explorer.exe" "shell:appsFolder\$($app.AppID)"
-        return
-    }
+    $appName = FuzzyMatch -InputString $AppName -StringsToMatch $availableApps.Name -First 1
 
-    # try to find an exe in PATH as fallback
-    $exe = (Get-Command $AppName -ErrorAction SilentlyContinue)
-    if ($null -ne $exe) {
-        Write-Host "Launching $AppName from PATH..."
-        Start-Process $AppName
-        return
-    }
+    $app = $availableApps | Where-Object { $_.Name -eq $appName }
 
-    # try to find a shortcut in Start Menu
-    $startMenuPaths = @(
-        "$env:ProgramData\Microsoft\Windows\Start Menu\Programs",
-        "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
-    )
-
-    foreach ($path in $startMenuPaths) {
-        $lnk = Get-ChildItem -Path $path -Filter "$AppName.lnk" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($lnk) {
-            Write-Host "Launching $AppName via shortcut..."
-            Start-Process $lnk.FullName
-            return
-        }
-    }
-
-    Write-Host "App '$AppName' not found."
+    Write-Host "Launching $($app.Name)..."
+    Start-Process "explorer.exe" "shell:appsFolder\$($app.AppID)"
+    return
 }
