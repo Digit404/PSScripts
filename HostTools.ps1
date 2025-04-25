@@ -1196,7 +1196,108 @@ function Start-AppByName {
 
     $app = $availableApps | Where-Object { $_.Name -eq $appName }
 
-    Write-Host "Launching $($app.Name)..."
+    Write-Host "Launching $($app.Name)..." -ForegroundColor Green
     Start-Process "explorer.exe" "shell:appsFolder\$($app.AppID)"
     return
+}
+
+<#
+.SYNOPSIS
+Stops a running application by process name, using fuzzy matching and optional force kill.
+
+.DESCRIPTION
+Stop-AppByName attempts to find and stop running processes matching the provided name. It uses fuzzy matching to suggest likely processes and displays up to five candidates. If the -Force switch is used, the function stops the closest match immediately. Without -Force, the user selects a process from a numbered menu. The function displays the number of instances for each process. Requires the FuzzyMatch function to be defined elsewhere.
+
+.PARAMETER ProcessName
+The name (or partial/fuzzy name) of the process to stop.
+
+.PARAMETER Force
+If specified, the closest matching process is stopped without prompting for user selection.
+
+.EXAMPLE
+Stop-AppByName notepad
+
+Prompts the user to select a Notepad process to stop.
+
+.EXAMPLE
+Stop-AppByName chrome -Force
+
+Immediately stops the process most closely matching "chrome".
+
+.NOTES
+Relies on an external FuzzyMatch function.
+#>
+function Stop-AppByName {
+    param (
+        [Parameter(Mandatory, ValueFromRemainingArguments)]
+        [string] $ProcessName,
+        [switch] $Force
+    )
+
+    $processCount = 5
+
+    $processes = Get-Process
+
+    $options = @()
+    
+    foreach ($process in $processes) {
+        $existingOption = $options | Where-Object { $_.Name -eq $process.Name }
+        if ($existingOption) {
+            $existingOption.Count++
+        }
+        else {
+            $options += [PSCustomObject]@{
+                Name  = $process.Name
+                Count = 1
+            }
+        }
+    }
+
+    $appNames = FuzzyMatch -InputString $ProcessName -StringsToMatch $options.Name -First $processCount
+
+    $apps = foreach ($name in $appNames) {
+        $options | Where-Object { $_.Name -eq $name }
+    }
+
+    if ($Force) {
+        $app = $appNames[0]
+        Write-Host "Stopping $($app)..." -ForegroundColor Green
+        Stop-Process -Name $app -Force -ErrorAction SilentlyContinue
+        return
+    }
+
+    Write-Host "Press the number of the app to stop:" -ForegroundColor Yellow
+
+    $i = 0
+    foreach ($app in $apps) {
+        Write-Host "[$($i + 1)]" -ForegroundColor Blue -NoNewline
+        Write-Host " $($app.Name) " -NoNewline
+        Write-Host "(x$($app.Count))" -ForegroundColor DarkGray
+        
+        $i++
+    }
+
+    Write-Host "> " -NoNewline
+    $key = [System.Console]::ReadKey($true)
+    Write-Host $key.KeyChar
+    $choice = $key.Key
+
+    if ($choice -eq [System.ConsoleKey]::Escape) {
+        return
+    }
+    elseif ($choice -eq [System.ConsoleKey]::Enter) {
+        $index = 0
+    }
+    else {
+        if ($choice -lt [int][System.ConsoleKey]::D1 -or $choice -gt ([int][System.ConsoleKey]::D1 + $apps.Count - 1)) {
+            Write-Host "Invalid choice." -ForegroundColor Red
+            return
+        }
+        $index = [int]$choice - [int][System.ConsoleKey]::D1
+    }
+
+    $appToStop = $apps[$index]
+    Write-Host "Stopping $($appToStop.Name)..." -ForegroundColor Green
+
+    Stop-Process -Name $appToStop.Name -Force -ErrorAction SilentlyContinue
 }
