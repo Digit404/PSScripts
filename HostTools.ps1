@@ -1301,3 +1301,89 @@ function Stop-AppByName {
 
     Stop-Process -Name $appToStop.Name -Force -ErrorAction SilentlyContinue
 }
+
+<#
+.SYNOPSIS
+Replaces text in a string using regular expressions.
+
+.DESCRIPTION
+ReplaceString takes input strings (from pipeline or parameter), searches for matches based on a regex pattern, and returns a new string with all matches replaced by the replacement text.
+Useful for batch or pipeline text transformations.
+
+.PARAMETER InputObject
+The string or pipeline input to process.
+
+.PARAMETER Pattern
+A regular expression pattern to search for in the input string.
+
+.PARAMETER Replacement
+The string that will replace each match of the pattern.
+
+.EXAMPLE
+"Hello 123" | ReplaceString '\d+' '456'
+
+Returns "Hello 456".
+
+.EXAMPLE
+ReplaceString -InputObject 'abc-xyz' -Pattern '-' -Replacement '_'
+
+Returns "abc_xyz".
+#>
+function ReplaceString {
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline=$true, Mandatory=$true)]
+        [string]$InputObject,
+
+        [Parameter(Position=0, Mandatory=$true)]
+        [string]$Pattern,
+
+        [Parameter(Position=1, Mandatory=$true)]
+        [string]$Replacement
+    )
+    process {
+        if (-not $InputObject) {
+            return
+        }
+        $InputObject -replace $Pattern, $Replacement
+    }
+}
+
+<#
+.SYNOPSIS
+Converts input into a PowerShell custom object.
+
+.DESCRIPTION
+ConvertTo-Object accepts either a hashtable or a scriptblock and creates a `[pscustomobject]`. If given a scriptblock, it builds an object from its definitions.
+Primarily used to enforce object consistency or adapt dynamic structures to PowerShell objects.
+
+.PARAMETER InputObject
+The input to convert, either a hash/PSObject or a scriptblock.
+
+.EXAMPLE
+ConvertTo-Object -InputObject @{ Name = "Alice"; ID = 42 }
+
+Returns a pscustomobject with Name="Alice" and ID=42.
+
+.EXAMPLE
+ConvertTo-Object -InputObject { Name = "Bob"; Score = 100 }
+
+Returns a pscustomobject with Name="Bob" and Score=100.
+
+.NOTES
+If InputObject is already a pscustomobject, it simply casts or returns it.
+#>
+function ConvertTo-Object {
+	param (
+		[Parameter(Mandatory = $true)]
+		[object]$InputObject
+	)
+
+	if ($InputObject -is [scriptblock]) {
+		$objectString = "[pscustomobject]@{" + $InputObject + "}"
+
+		return Invoke-Expression $objectString
+	}
+
+	return [pscustomobject] $InputObject
+}

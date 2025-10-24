@@ -51,6 +51,8 @@ Set-Alias new "New-Object"
 Set-Alias rename Rename-Item
 Set-Alias rn Rename-Item
 Set-Alias touch New-Item
+Set-Alias rs ReplaceString
+Set-Alias ^ ConvertTo-Object
 
 # Default Keybindings that aren't set in some versions of PSReadLine
 Set-PSReadLineKeyHandler -Chord 'Ctrl+Backspace' -Function BackwardKillWord
